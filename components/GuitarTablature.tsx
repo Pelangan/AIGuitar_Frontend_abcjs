@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import ABCJS from "abcjs";
 
-export default function Home() {
+const GuitarTablature = () => {
   const [abcNotation, setAbcNotation] = useState("");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/data/c_major_scales_exercise_01.json");
+        const response = await fetch("/data/exercise.json");
 
         if (!response.ok) {
           throw new Error(`Failed to fetch JSON: ${response.statusText}`);
@@ -19,7 +19,7 @@ export default function Home() {
         if (data.abc_notation) {
           ABCJS.renderAbc("abc-container", data.abc_notation, {
             responsive: "resize",
-            scale: 1.2,
+            scale: 1.5,
             add_classes: true,
             paddingtop: 20,
             tablature: [
@@ -40,25 +40,12 @@ export default function Home() {
     fetchData();
   }, []);
 
-  const playMusic = () => {
-    const synth = new ABCJS.synth.CreateSynth();
-    synth
-      .init({
-        visualObj: ABCJS.renderAbc("abc-container", abcNotation)[0],
-        options: { soundFontUrl: "https://paulrosen.github.io/abcjs/audio" }
-      })
-      .then(() => synth.start())
-      .catch((err) => console.error("Playback error:", err));
-  };
-
   return (
-    <div style={{ textAlign: "center", padding: "50px 20px" }}>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>C Major Scale - ABC Notation Test</h1>
-      <h2>Guitar Tablature</h2>
-      <div id="abc-container"></div>
-      <button className="play-button" onClick={playMusic}>
-        Play Music
-      </button>
+      <div id="abc-container" style={{ border: "1px solid white", padding: "20px" }}></div>
     </div>
   );
-}
+};
+
+export default GuitarTablature;
