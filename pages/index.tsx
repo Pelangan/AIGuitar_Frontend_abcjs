@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ABCJS from "abcjs";
+import 'abcjs/abcjs-audio.css';
 
 export default function Home() {
   const [abcNotation, setAbcNotation] = useState("");
@@ -27,9 +28,9 @@ export default function Home() {
                 instrument: "guitar",
                 label: "Guitar",
                 tuning: ["E,", "A,", "D", "G", "B", "e"],
-                capo: 0
-              }
-            ]
+                capo: 0,
+              },
+            ],
           });
         }
       } catch (error) {
@@ -40,14 +41,89 @@ export default function Home() {
     fetchData();
   }, []);
 
+  class CursorControl {
+    onStart: () => void;
+    onEvent: (ev: any) => void;
+    onFinished: () => void;
+
+    constructor() {
+      this.onStart = function() {
+        var svg = document.querySelector("#abc-container svg");
+        if (svg) {
+          var cursor = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          cursor.setAttribute("class", "abcjs-cursor");
+          cursor.setAttributeNS(null, "x1", "0");
+          cursor.setAttributeNS(null, "y1", "0");
+          cursor.setAttributeNS(null, "x2", "0");
+          cursor.setAttributeNS(null, "y2", "0");
+          svg.appendChild(cursor);
+        }
+      };
+      this.onEvent = function(ev) {
+        var cursor = document.querySelector("#abc-container svg .abcjs-cursor");
+        if (cursor) {
+          cursor.setAttribute("x1", ev.left);
+          cursor.setAttribute("x2", ev.left);
+          cursor.setAttribute("y1", ev.top);
+          cursor.setAttribute("y2", ev.top + ev.height);
+        }
+      };
+      this.onFinished = function() {
+        var cursor = document.querySelector("#abc-container svg .abcjs-cursor");
+        if (cursor) {
+          cursor.setAttribute("x1", "0");
+          cursor.setAttribute("x2", "0");
+          cursor.setAttribute("y1", "0");
+          cursor.setAttribute("y2", "0");
+        }
+      };
+    }
+  }
+
+  const cursorControl = new CursorControl();
+
   const playMusic = () => {
+    console.log("Attempting to play music...");
+
+    if (!ABCJS.synth.supportsAudio()) {
+      console.error("Audio is not supported in this browser.");
+      return;
+    }
+
+    const synthControl = new ABCJS.synth.SynthController();
+    synthControl.load("#audio", cursorControl, {
+      displayLoop: true,
+      displayRestart: true,
+      displayPlay: true,
+      displayProgress: true,
+      displayWarp: true,
+    });
+
+    const visualObj = ABCJS.renderAbc("abc-container", abcNotation)[0];
+
+    const audioContext = new AudioContext();
+    audioContext.resume()
+      .then(() => console.log("AudioContext resumed successfully."))
+      .catch((err) => console.error("Error resuming AudioContext:", err));
+
     const synth = new ABCJS.synth.CreateSynth();
+
     synth
       .init({
-        visualObj: ABCJS.renderAbc("abc-container", abcNotation)[0],
-        options: { soundFontUrl: "https://paulrosen.github.io/abcjs/audio" }
+        visualObj: visualObj,
+        audioContext: audioContext,
+        options: {
+          soundFontUrl: "/soundfonts",
+          program: 0,
+        },
       })
-      .then(() => synth.start())
+      .then(() => {
+        console.log("Synth initialized, playing music...");
+        synthControl.setTune(visualObj, true).then(() => {
+          synthControl.play();
+          console.log("Playback started successfully!");
+        });
+      })
       .catch((err) => console.error("Playback error:", err));
   };
 
@@ -56,6 +132,7 @@ export default function Home() {
       <h1>C Major Scale - ABC Notation Test</h1>
       <h2>Guitar Tablature</h2>
       <div id="abc-container"></div>
+      <div id="audio"></div>
       <button className="play-button" onClick={playMusic}>
         Play Music
       </button>
