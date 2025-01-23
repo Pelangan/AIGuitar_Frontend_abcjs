@@ -1,0 +1,13 @@
+{
+    "exercise_id": "c_major_scales_exercise_01",
+    "exercise_type": "beginner",
+    "difficulty": "easy",
+    "title": "C Major Scale 6 bars",
+    "tags": [
+        "c_major_scale",
+        "beginner",
+        "c_major_scale"
+    ],
+    "description": "C Major Scale",
+    "abc_notation": "X: 1\nT: C Major Scale\nM: 4/4\nL: 1/4\nK: C\nC D D# E G A B c B A G E D# D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C |"
+}

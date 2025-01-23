@@ -8,7 +8,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/data/c_major_scales_exercise_01.json");
+        const response = await fetch("/data/c_major_scales_exercise_03.json");
 
         if (!response.ok) {
           throw new Error(`Failed to fetch JSON: ${response.statusText}`);
