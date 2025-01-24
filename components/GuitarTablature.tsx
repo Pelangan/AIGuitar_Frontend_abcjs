@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import ABCJS from 'abcjs';
 import 'abcjs/abcjs-audio.css';
 
@@ -11,6 +11,8 @@ M: 4/4
 L: 1/8
 K: C treble
 C D E F G A B c |`;
+
+  const visualObjRef = useRef<any>(null);
 
   // Define cursorControl at the component level
   const cursorControl = new (class CursorControl {
@@ -69,8 +71,6 @@ C D E F G A B c |`;
       displayWarp: true,
     });
 
-    const visualObj = ABCJS.renderAbc("abc-container", testNotation)[0];
-
     const audioContext = new AudioContext();
     audioContext.resume()
       .then(() => console.log("AudioContext resumed successfully."))
@@ -80,7 +80,7 @@ C D E F G A B c |`;
 
     synth
       .init({
-        visualObj: visualObj,
+        visualObj: visualObjRef.current,
         audioContext: audioContext,
         options: {
           soundFontUrl: "/soundfonts",
@@ -89,7 +89,7 @@ C D E F G A B c |`;
       })
       .then(() => {
         console.log("Synth initialized, playing music...");
-        synthControl.setTune(visualObj, true).then(() => {
+        synthControl.setTune(visualObjRef.current, true).then(() => {
           synthControl.play();
           console.log("Playback started successfully!");
         });
@@ -99,7 +99,7 @@ C D E F G A B c |`;
 
   useEffect(() => {
     console.log("Initializing ABCJS...");
-    ABCJS.renderAbc("abc-container", testNotation, {
+    const visualObj = ABCJS.renderAbc("abc-container", testNotation, {
       responsive: "resize",
       scale: 1.5,
       staffwidth: 800,
@@ -112,7 +112,9 @@ C D E F G A B c |`;
       format: {
         // Remove staffSep
       }
-    });
+    })[0];
+
+    visualObjRef.current = visualObj;
 
     // SVG manipulation for better visibility
     const svg = document.querySelector("#abc-container svg");
