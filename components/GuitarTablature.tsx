@@ -1,49 +1,29 @@
-import { useEffect, useState } from "react";
-import ABCJS from "abcjs";
+'use client';
+
+import { useEffect } from "react";
+import ABCJS from 'abcjs';
 
 const GuitarTablature = () => {
-  const [abcNotation, setAbcNotation] = useState("");
-
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch("/data/exercise.json");
+    console.log("Initializing ABCJS...");
+    const testNotation = `X: 1
+T: Simple Scale
+M: 4/4
+L: 1/8
+K: C treble
+C D E F G A B c |`;
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch JSON: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setAbcNotation(data.abc_notation);
-
-        if (data.abc_notation) {
-          ABCJS.renderAbc("abc-container", data.abc_notation, {
-            responsive: "resize",
-            scale: 1.5,
-            add_classes: true,
-            paddingtop: 20,
-            tablature: [
-              {
-                instrument: "guitar",
-                label: "Guitar",
-                tuning: ["E,", "A,", "D", "G", "B", "e"],
-                capo: 0
-              }
-            ]
-          });
-        }
-      } catch (error) {
-        console.error("Error loading JSON:", error);
-      }
-    }
-
-    fetchData();
+    ABCJS.renderAbc("abc-container", testNotation, {
+      responsive: "resize",
+      scale: 1.5,
+      staffwidth: 800
+    });
   }, []);
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>C Major Scale - ABC Notation Test</h1>
-      <div id="abc-container" style={{ border: "1px solid white", padding: "20px" }}></div>
+      <div id="abc-container" style={{ width: "800px", margin: "0 auto", border: "1px solid black", padding: "20px", minHeight: "200px" }}></div>
     </div>
   );
 };
