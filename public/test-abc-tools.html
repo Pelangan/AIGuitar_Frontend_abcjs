@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tablature Rendering</title>
+    <script src="https://unpkg.com/abcjs@6.1.0/dist/abcjs-basic-min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: white;  /* Change background to white */
+            color: black;  /* Change text color to black */
+            text-align: center; 
+            margin: 0; 
+            padding: 20px;
+        }
+        #paper { 
+            border: 1px solid black;  /* Change border to black */
+            padding: 20px; 
+            display: inline-block; 
+            margin-top: 20px; 
+            background-color: white;  /* Ensure background is white */
+            text-align: left;
+        }
+        /* Additional styles for SVG elements */
+        svg {
+            fill: black;  /* Ensure SVG elements are black */
+            stroke: black;  /* Ensure SVG strokes are black */
+        }
+    </style>
+</head>
+<body>
+    <h1>Guitar Tablature Rendering</h1>
+    <div id="paper"></div>
+
+    <script type="text/javascript">
+        window.onload = function () {
+            const abcNotation = `X: 1
+T: Simple Scale
+M: 4/4
+L: 1/8
+K: C treble
+C D E F G A B c |
+`;
+
+            var renderDivs = ['paper'];
+
+            var params = {
+                tablature: [{
+                    instrument: 'guitar',
+                    label: 'Guitar',
+                    tuning: ['E,', 'A,', 'D', 'G', 'B', 'e'],
+                    highestNote: "f'",
+                    capo: 0
+                }],
+                responsive: 'resize',
+                oneSvgPerLine: true,
+                expandToWidest: true,
+                selectTypes: false,
+                format: {
+                    staffSep: 150
+                }
+            };
+
+            // Render the ABC notation
+            var visualObj = ABCJS.renderAbc(renderDivs, abcNotation, params);
+
+            // Add vertical space between specific elements
+            const svg = document.querySelector("#paper svg");
+            if (svg) {
+                const groups = svg.querySelectorAll("g");
+                if (groups.length > 1) {
+                    groups[1].setAttribute("transform", "translate(0, -20)"); // Adjust 20 to increase/decrease space
+                }
+
+                // Adjust clef, time signature, and notes
+                const clef = svg.querySelector("[data-name='staff-extra clef']");
+                const timeSignature = svg.querySelector("[data-name='staff-extra time-signature']");
+                const notes = svg.querySelectorAll("[data-name='note']");
+
+                if (clef) clef.setAttribute("transform", "translate(0, -20)");
+                if (timeSignature) timeSignature.setAttribute("transform", "translate(0, -20)");
+                notes.forEach(note => note.setAttribute("transform", "translate(0, -20)"));
+
+                // Extend all bar lines and note lines
+                const allPaths = svg.querySelectorAll("path");
+                if (allPaths) {
+                    allPaths.forEach(path => {
+                        const d = path.getAttribute("d");
+                        // Check if it's a vertical line (contains same x coordinate at start and end)
+                        if (d && d.includes("202.23")) {
+                            const x = d.split(" ")[1];  // Get x coordinate
+                            path.setAttribute("stroke", "black");
+                            path.setAttribute("stroke-width", "1");
+                            path.setAttribute("d", `M ${x} 202.23 L ${x} 82.23`);
+                        }
+                    });
+                }
+            }
+        };
+    </script>
+</body>
+</html>

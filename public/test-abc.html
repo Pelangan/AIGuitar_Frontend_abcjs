@@ -3,35 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABC Notation Test</title>
+    <title>Simple Guitar Tablature Test</title>
     <script src="https://unpkg.com/abcjs@6.1.0/dist/abcjs-basic-min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #282828; color: white; text-align: center; }
-        #abc-container { border: 1px solid white; padding: 20px; display: inline-block; margin-top: 50px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #282828; 
+            color: white; 
+            text-align: center; 
+            margin: 0; 
+            padding: 20px;
+        }
+        #paper { 
+            border: 1px solid white; 
+            padding: 20px; 
+            display: inline-block; 
+            margin-top: 20px; 
+            background-color: #1e1e1e;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
-    <h1>C Major Scale - ABC Notation Test</h1>
-    <div id="abc-container"></div>
+    <h1>Simple Guitar Tablature Test</h1>
+    <div id="paper"></div>
 
-    <h2>Guitar Tablature</h2>
-<div id="paper1"></div>
+    <script type="text/javascript">
+        window.onload = function () {
+            const abcNotation = `X: 1
+T: Simple Scale
+M: 4/4
+L: 1/8
+K: C treble
+C D E F G A B c |
+`;
 
-<script type="text/javascript">
-    window.onload = function () {
-        var abcGuitar = "X: 1\nT: C Major Scale\nM: 4/4\nL: 1/4\nK: C\nC D D# E G A B c B A G E D# D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C | C D E F G A B c B A G F E D C |";
-        var optionsGuitar = {
-            tablature: [
-                {
-                    instrument: 'guitar',
-                    label: 'Guitar',
-                    tuning: ['E,', 'A,', 'D', 'G', 'B', 'e'],
-                    capo: 0
-                }
-            ]
+var renderOptions = {
+        responsive: "resize",
+        scale: 1.2,
+        staffwidth: 800,
+        paddingleft: 20,
+        paddingbottom: 50,  // Increase space below
+        paddingtop: 50,     // Increase space above
+        add_classes: true,  // Helps with styling if needed
+        tablature: [{
+            instrument: 'guitar',
+            label: 'Guitar',
+            tuning: ['E,', 'A,', 'D', 'G', 'B', 'e'],
+            capo: 0
+        }]
+    };
+
+            ABCJS.renderAbc("paper", abcNotation, renderOptions);
         };
-        ABCJS.renderAbc("paper1", abcGuitar, optionsGuitar);
-    }
-</script>
+    </script>
 </body>
 </html>

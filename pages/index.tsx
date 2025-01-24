@@ -21,16 +21,14 @@ export default function Home() {
           ABCJS.renderAbc("abc-container", data.abc_notation, {
             responsive: "resize",
             scale: 1.2,
-            add_classes: true,
+            staffwidth: 800,
             paddingtop: 20,
-            tablature: [
-              {
-                instrument: "guitar",
-                label: "Guitar",
-                tuning: ["E,", "A,", "D", "G", "B", "e"],
-                capo: 0,
-              },
-            ],
+            paddingbottom: 40,
+            tablature: [{
+              instrument: 'guitar',
+              tuning: ['E,', 'A,', 'D', 'G', 'B', 'e'],
+              capo: 0
+            }]
           });
         }
       } catch (error) {
