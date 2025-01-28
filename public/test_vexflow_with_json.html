@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guitar Tablature with VexFlow</title>
-    <script src="https://unpkg.com/vexflow/releases/vexflow-min.js"></script>
+    <!-- Use standalone VexTab distribution -->
+    <script src="https://unpkg.com/vextab/releases/vextab-div.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         body {
@@ -43,16 +44,17 @@
         
         async function loadTablature() {
             try {
-                const response = await fetch('/data/c_major_scale.json');
+                const response = await fetch('./data/c_major_scale.json');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                if (!data || !data.tab_notes || !data.standard_notes) {
-                    console.warn("Invalid JSON structure");
+                console.log("Loaded data:", data); // Debug log
+                if (!data || !data.measures || !Array.isArray(data.measures)) {
+                    console.warn("Invalid JSON structure - expected measures array");
                     return;
                 }
-                currentNotes = data.standard_notes;
+                currentNotes = data.measures.map(measure => measure.notes).flat();
                 renderTablature(data);
             } catch (error) {
                 console.error("Error loading JSON:", error);
@@ -60,112 +62,34 @@
         }
 
         function renderTablature(data) {
-            const VF = Vex.Flow;
-            const div = document.getElementById("output");
-            div.innerHTML = '';
+            try {
+                const div = document.getElementById("output");
+                div.innerHTML = '';
+                
+                // Initialize VexTab
+                const VF = Vex.Flow;
+                const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+                renderer.resize(1200, 300);
+                
+                const artist = new Artist(10, 10, 1200, { scale: 0.8 });
+                const tab = new VexTab(artist);
 
-            // Set up the renderer and context
-            const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
-            renderer.resize(1200, 300);
-            const context = renderer.getContext();
-            context.setBackgroundFillStyle("white");
-            
-            // Create staves for each measure
-            const stave1 = new VF.Stave(10, 40, 367);
-            const tabstave1 = new VF.TabStave(10, 120, 367);
-            
-            const stave2 = new VF.Stave(377, 40, 367);
-            const tabstave2 = new VF.TabStave(377, 120, 367);
-            
-            const stave3 = new VF.Stave(744, 40, 367);
-            const tabstave3 = new VF.TabStave(744, 120, 367);
-            
-            // Add clefs and time signature to first measure only
-            stave1.addClef("treble").addTimeSignature("4/4");
-            tabstave1.addClef("tab").addTimeSignature("4/4");
-            
-            // Draw all staves
-            stave1.setContext(context).draw();
-            tabstave1.setContext(context).draw();
-            stave2.setContext(context).draw();
-            tabstave2.setContext(context).draw();
-            stave3.setContext(context).draw();
-            tabstave3.setContext(context).draw();
-            
-            // Add connectors between measures
-            const connector1 = new VF.StaveConnector(stave1, tabstave1)
-                .setType(VF.StaveConnector.type.SINGLE);
-            const connector2 = new VF.StaveConnector(stave2, tabstave2)
-                .setType(VF.StaveConnector.type.SINGLE);
-            const connector3 = new VF.StaveConnector(stave3, tabstave3)
-                .setType(VF.StaveConnector.type.SINGLE);
-            
-            // Draw connectors
-            connector1.setContext(context).draw();
-            connector2.setContext(context).draw();
-            connector3.setContext(context).draw();
+                // Build the VexTab notation
+                let vextabNotation = `
+                    tabstave notation=true key=C time=4/4
+                    ${data.measures[0].notes} |
+                    ${data.measures[1].notes} |
+                    ${data.measures[2].notes}
+                `;
 
-            // Convert standard notation data
-            let notes = data.standard_notes.map(n => {
-                return new VF.StaveNote({ keys: [n.key], duration: n.duration });
-            });
-
-            // Convert tab data
-            let tabNotes = data.tab_notes.map(n => {
-                return new VF.TabNote({
-                    positions: [{ str: n.string, fret: n.fret }],
-                    duration: n.duration
-                });
-            });
-
-            // Split notes into three groups for beaming
-            const firstBar = notes.slice(0, 8);
-            const secondBar = notes.slice(8, 16);
-            const thirdBar = notes.slice(16);
-
-            // Create beams for each group
-            const beams = [
-                new VF.Beam(firstBar),
-                new VF.Beam(secondBar),
-                new VF.Beam(thirdBar)
-            ];
-
-            // Create voices and format first
-            const voice = new VF.Voice({ num_beats: 24, beat_value: 8 }).addTickables(notes);
-            const tabVoice = new VF.Voice({ num_beats: 24, beat_value: 8 }).addTickables(tabNotes);
-
-            new VF.Formatter()
-                .joinVoices([voice])
-                .joinVoices([tabVoice])
-                .format([voice, tabVoice], 1000);
-            
-            // Draw voices
-            voice.draw(context, stave1);
-            tabVoice.draw(context, tabstave1);
-
-            // Draw beams
-            beams.forEach(beam => beam.setContext(context).draw());
-
-            // Calculate bar line positions based on the 8th and 16th notes
-            const firstBarX = notes[7].getAbsoluteX() + 20;  // After 8th note
-            const secondBarX = notes[15].getAbsoluteX() + 20;  // After 16th note
-
-            // Add vertical bar lines at calculated positions
-            const barLine1 = new VF.StaveConnector(stave1, tabstave1)
-                .setType(VF.StaveConnector.type.SINGLE)
-                .setXShift(firstBarX);
-
-            const barLine2 = new VF.StaveConnector(stave2, tabstave2)
-                .setType(VF.StaveConnector.type.SINGLE)
-                .setXShift(secondBarX);
-
-            // Draw bar lines
-            barLine1.setContext(context).draw();
-            barLine2.setContext(context).draw();
-
-            // Add final bar line
-            stave3.setEndBarType(VF.Barline.type.END);
-            tabstave3.setEndBarType(VF.Barline.type.END);
+                tab.parse(vextabNotation);
+                artist.render(renderer);
+                
+            } catch (e) {
+                console.error("VexTab error:", e);
+                console.log(e.message);
+                console.log(e.stack);
+            }
         }
 
         // Audio playback functionality
