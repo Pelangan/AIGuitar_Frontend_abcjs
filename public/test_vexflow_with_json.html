@@ -31,6 +31,10 @@
             font-size: 16px;
             cursor: pointer;
         }
+        /* Add this to hide the vexflow.com text */
+        .vex-tabdiv .vex-copyright {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -66,22 +70,47 @@
                 const div = document.getElementById("output");
                 div.innerHTML = '';
                 
+                // Calculate dimensions
+                const BARS_PER_LINE = 3;
+                const WIDTH_PER_BAR = 400;
+                const HEIGHT_PER_LINE = 250;
+                
+                const totalMeasures = data.measures.length;
+                const numberOfLines = Math.ceil(totalMeasures / BARS_PER_LINE);
+                const totalWidth = WIDTH_PER_BAR * BARS_PER_LINE;
+                const totalHeight = HEIGHT_PER_LINE * numberOfLines;
+                
                 // Initialize VexTab
                 const VF = Vex.Flow;
                 const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
-                renderer.resize(1200, 300);
+                renderer.resize(totalWidth, totalHeight);
                 
-                const artist = new Artist(10, 10, 1200, { scale: 0.8 });
+                const artist = new Artist(10, 10, totalWidth, { scale: 0.8 });
                 const tab = new VexTab(artist);
 
-                // Build the VexTab notation
-                let vextabNotation = `
-                    tabstave notation=true key=C time=4/4
-                    ${data.measures[0].notes} |
-                    ${data.measures[1].notes} |
-                    ${data.measures[2].notes}
-                `;
+                // Start with initial tabstave
+                let vextabNotation = "tabstave notation=true key=C time=4/4\n";
+                
+                // Build notation
+                data.measures.forEach((measure, index) => {
+                    // Remove the "notes" prefix if it exists in the measure.notes
+                    let measureNotes = measure.notes.replace(/^notes\s+/, '');
+                    
+                    // Add "notes" only at the start of each line
+                    if (index % BARS_PER_LINE === 0) {
+                        vextabNotation += "notes ";
+                    }
+                    
+                    vextabNotation += `${measureNotes} | `;
+                    
+                    // Add a new tabstave after every 3 measures (except for the last line)
+                    if ((index + 1) % BARS_PER_LINE === 0 && index < data.measures.length - 1) {
+                        vextabNotation += "\ntabstave notation=true\n";
+                    }
+                });
 
+                console.log("Final VexTab notation:", vextabNotation); // Debug log
+                
                 tab.parse(vextabNotation);
                 artist.render(renderer);
                 
