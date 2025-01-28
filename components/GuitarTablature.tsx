@@ -1,17 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ABCJS from 'abcjs';
 import 'abcjs/abcjs-audio.css';
 
 const GuitarTablature = () => {
-  const testNotation = `X: 1
-T: Simple Scale
-M: 4/4
-L: 1/8
-K: C treble
-C D E F G A B c |`;
-
+  const [abcNotation, setAbcNotation] = useState("");
   const visualObjRef = useRef<any>(null);
 
   // Define cursorControl at the component level
@@ -82,6 +76,7 @@ C D E F G A B c |`;
       .init({
         visualObj: visualObjRef.current,
         audioContext: audioContext,
+        millisecondsPerMeasure: 2000,
         options: {
           soundFontUrl: "/soundfonts",
           program: 0,
@@ -89,6 +84,7 @@ C D E F G A B c |`;
       })
       .then(() => {
         console.log("Synth initialized, playing music...");
+        console.log("Visual Object:", visualObjRef.current);
         synthControl.setTune(visualObjRef.current, true).then(() => {
           synthControl.play();
           console.log("Playback started successfully!");
@@ -98,55 +94,65 @@ C D E F G A B c |`;
   };
 
   useEffect(() => {
-    console.log("Initializing ABCJS...");
-    const visualObj = ABCJS.renderAbc("abc-container", testNotation, {
-      responsive: "resize",
-      scale: 1.5,
-      staffwidth: 800,
-      tablature: [{
-        instrument: "guitar",
-        label: "Guitar",
-        tuning: ["E,", "A,", "D", "G", "B", "e"],
-        capo: 0
-      }],
-      format: {
-        // Remove staffSep
-      }
-    })[0];
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/data/c_major_scales_exercise_03.json");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch JSON: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAbcNotation(data.abc_notation);
 
-    visualObjRef.current = visualObj;
+        const visualObj = ABCJS.renderAbc("abc-container", data.abc_notation, {
+          responsive: "resize",
+          scale: 1.5,
+          staffwidth: 800,
+          tablature: [{
+            instrument: "guitar",
+            label: "Guitar",
+            tuning: ["E,", "A,", "D", "G", "B", "e"],
+            capo: 0
+          }],
+        })[0];
 
-    // SVG manipulation for better visibility
-    const svg = document.querySelector("#abc-container svg");
-    if (svg) {
-      const groups = svg.querySelectorAll("g");
-      if (groups.length > 1) {
-        groups[1].setAttribute("transform", "translate(0, -20)"); // Adjust space
-      }
+        visualObjRef.current = visualObj;
 
-      const clef = svg.querySelector("[data-name='staff-extra clef']");
-      const timeSignature = svg.querySelector("[data-name='staff-extra time-signature']");
-      const notes = svg.querySelectorAll("[data-name='note']");
-
-      if (clef) clef.setAttribute("transform", "translate(0, 0)");
-      if (timeSignature) timeSignature.setAttribute("transform", "translate(0, 0)");
-      notes.forEach(note => note.setAttribute("transform", "translate(0, 0)"));
-
-      // Extend all bar lines and note lines
-      const allPaths = svg.querySelectorAll("path");
-      if (allPaths) {
-        allPaths.forEach(path => {
-          const d = path.getAttribute("d");
-          if (d && d.includes("202.23")) {
-            const x = d.split(" ")[1];  // Get x coordinate
-            path.setAttribute("stroke", "black");
-            path.setAttribute("stroke-width", "1");
-            path.setAttribute("d", `M ${x} 202.23 L ${x} 82.23`);
+        // SVG manipulation for better visibility
+        const svg = document.querySelector("#abc-container svg");
+        if (svg) {
+          const groups = svg.querySelectorAll("g");
+          if (groups.length > 1) {
+            groups[1].setAttribute("transform", "translate(0, -20)"); // Adjust space
           }
-        });
-      }
-    }
 
+          const clef = svg.querySelector("[data-name='staff-extra clef']");
+          const timeSignature = svg.querySelector("[data-name='staff-extra time-signature']");
+          const notes = svg.querySelectorAll("[data-name='note']");
+
+          if (clef) clef.setAttribute("transform", "translate(0, 0)");
+          if (timeSignature) timeSignature.setAttribute("transform", "translate(0, 0)");
+          notes.forEach(note => note.setAttribute("transform", "translate(0, 0)"));
+
+          // Extend all bar lines and note lines
+          const allPaths = svg.querySelectorAll("path");
+          if (allPaths) {
+            allPaths.forEach(path => {
+              const d = path.getAttribute("d");
+              if (d && d.includes("202.23")) {
+                const x = d.split(" ")[1];  // Get x coordinate
+                path.setAttribute("stroke", "black");
+                path.setAttribute("stroke-width", "1");
+                path.setAttribute("d", `M ${x} 202.23 L ${x} 82.23`);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading JSON:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (

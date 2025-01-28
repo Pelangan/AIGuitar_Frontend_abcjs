@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VexFlow Guitar Tab Example</title>
+    <script src="https://unpkg.com/vexflow@4.0.3/releases/vexflow-min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: white;
+            color: black;
+            margin: 20px;
+        }
+        #vexflow-container {
+            background-color: #f0f0f0;
+            padding: 20px;
+            display: inline-block;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>VexFlow Guitar Tablature</h1>
+    <div id="vexflow-container"></div>
+
+    <script>
+        // Create the VexFlow renderer
+        const VF = Vex.Flow;
+        const div = document.getElementById("vexflow-container");
+        const renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+
+        // Configure renderer dimensions
+        renderer.resize(800, 300);
+        const context = renderer.getContext();
+        context.setFont("Arial", 10, "").setBackgroundFillStyle("#f0f0f0");
+
+        // Create the stave for notation and tablature
+        const stave = new VF.Stave(10, 40, 700);
+        stave.addClef("treble").addTimeSignature("4/4");
+        stave.setContext(context).draw();
+
+        // Guitar tab stave
+        const tabstave = new VF.TabStave(10, 120, 700);
+        tabstave.addClef("tab").addTimeSignature("4/4");
+        tabstave.setContext(context).draw();
+
+        // Define notes for standard notation
+        const notes = [
+            new VF.StaveNote({ keys: ["C/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["D/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["E/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["F/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["G/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["A/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["B/4"], duration: "8" }),
+            new VF.StaveNote({ keys: ["C/5"], duration: "8" })
+        ];
+
+        // Define tab notes (string and fret positions)
+        const tabNotes = [
+            new VF.TabNote({ positions: [{ str: 6, fret: 8 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 6, fret: 10 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 5, fret: 7 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 5, fret: 8 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 4, fret: 5 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 4, fret: 7 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 3, fret: 4 }], duration: "8" }),
+            new VF.TabNote({ positions: [{ str: 3, fret: 5 }], duration: "8" }),
+        ];
+
+        // Group notes into beams (4 notes per beam)
+        const beams = VF.Beam.generateBeams(notes, {
+            groups: [new VF.Fraction(4, 8)]
+        });
+
+        // Create voices and format for notation and tablature
+        const voice = new VF.Voice({ num_beats: 8, beat_value: 8 }).addTickables(notes);
+        const tabVoice = new VF.Voice({ num_beats: 8, beat_value: 8 }).addTickables(tabNotes);
+
+        // Add a bar line in the middle (after 4 eighth notes)
+        const barLine = new VF.BarNote();
+        voice.addTickable(barLine);
+        tabVoice.addTickable(barLine);
+
+        const formatter = new VF.Formatter()
+            .joinVoices([voice])
+            .joinVoices([tabVoice])
+            .format([voice, tabVoice], 600);
+
+        // Draw voices
+        voice.draw(context, stave);
+        tabVoice.draw(context, tabstave);
+
+        // Draw beams
+        beams.forEach(beam => beam.setContext(context).draw());
+
+        // Add bar lines with explicit styling
+        context.setStrokeStyle('black');
+        context.setLineWidth(1);
+
+        // Draw middle bar line
+        const middleX = stave.getX() + 350; // Adjust this value to position the bar line
+        context.beginPath();
+        context.moveTo(middleX, stave.getY());
+        context.lineTo(middleX, stave.getY() + stave.getHeight());
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(middleX, tabstave.getY());
+        context.lineTo(middleX, tabstave.getY() + tabstave.getHeight());
+        context.stroke();
+
+        // Add end bar lines
+        stave.setEndBarType(VF.Barline.type.END);
+        tabstave.setEndBarType(VF.Barline.type.END);
+        
+        // Draw end bar lines with explicit styling
+        const endX = stave.getX() + stave.getWidth();
+        context.beginPath();
+        context.moveTo(endX, stave.getY());
+        context.lineTo(endX, stave.getY() + stave.getHeight());
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(endX, tabstave.getY());
+        context.lineTo(endX, tabstave.getY() + tabstave.getHeight());
+        context.stroke();
+    </script>
+</body>
+</html>
