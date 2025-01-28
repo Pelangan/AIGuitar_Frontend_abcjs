@@ -1,9 +1,9 @@
-import GuitarTablature from '@/components/GuitarTablature';
+import TabViewer from '@/components/TabViewer';
 
 const Home = () => {
   return (
     <div>
-      <GuitarTablature />
+      <TabViewer />
     </div>
   );
 };
